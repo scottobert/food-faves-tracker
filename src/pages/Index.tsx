@@ -1,11 +1,11 @@
 
-// Mobile-and-desktop cross platform, favorite meals app
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Meal } from "@/types/meal";
 import MealCard from "@/components/MealCard";
 import MealForm from "@/components/MealForm";
 import { Plus } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import { useCurrentLocation } from "@/hooks/useCurrentLocation";
 
 const DEMO: Meal[] = [
   {
@@ -15,6 +15,8 @@ const DEMO: Meal[] = [
     rating: 5,
     imageUrl: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=400&q=80",
     description: "Classic tomato, mozzarella, basil.",
+    latitude: 37.773972,
+    longitude: -122.431297,
   },
   {
     id: "2",
@@ -23,12 +25,43 @@ const DEMO: Meal[] = [
     rating: 4,
     imageUrl: undefined,
     description: "",
+    latitude: undefined,
+    longitude: undefined,
   },
 ];
+
+function distanceInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
+  // Haversine formula
+  const toRad = (x: number) => (x * Math.PI) / 180;
+  const R = 6371e3; // Earth radius in meters
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+const NEARBY_METERS = 100; // how close user must be to "match" a restaurant
 
 export default function Index() {
   const [meals, setMeals] = useState<Meal[]>(DEMO);
   const [showForm, setShowForm] = useState(false);
+
+  const { location, error: locError, refresh } = useCurrentLocation();
+
+  // Find a meal with a restaurant near the current location
+  const nearbyMeal = useMemo(() => {
+    if (!location) return null;
+    return meals.find(
+      m =>
+        typeof m.latitude === "number" &&
+        typeof m.longitude === "number" &&
+        distanceInMeters(location.latitude, location.longitude, m.latitude, m.longitude) < NEARBY_METERS
+    );
+  }, [meals, location]);
 
   function addMeal(fields: Omit<Meal, "id">) {
     setMeals([{ ...fields, id: uuidv4() }, ...meals]);
@@ -53,7 +86,19 @@ export default function Index() {
           <Plus size={28} />
         </button>
       </header>
-      {/* Meals List */}
+      {nearbyMeal && (
+        <div className="bg-green-100 border-l-4 border-green-600 p-4 mb-6 rounded-lg shadow flex items-center gap-4">
+          <span className="text-green-700 font-semibold">
+            You're at <b>{nearbyMeal.restaurant}</b>!
+          </span>
+          <span className="text-green-800">
+            Try your favorite: <b>{nearbyMeal.name}</b>
+          </span>
+          {nearbyMeal.imageUrl && (
+            <img src={nearbyMeal.imageUrl} alt={nearbyMeal.name} className="h-10 w-10 rounded shadow ml-2 object-cover" />
+          )}
+        </div>
+      )}
       <section>
         {meals.length === 0 ? (
           <div className="text-gray-500 text-xl flex flex-col items-center mt-16">
