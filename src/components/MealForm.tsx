@@ -4,6 +4,7 @@ import { Meal } from "@/types/meal";
 import StarRating from "./StarRating";
 import { X } from "lucide-react";
 import { useCurrentLocation } from "@/hooks/useCurrentLocation";
+import RestaurantLocationSearch from "./RestaurantLocationSearch";
 
 type Props = {
   onSave: (meal: Omit<Meal, "id">) => void;
@@ -24,6 +25,10 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
   const { location, error: locError, refresh } = useCurrentLocation();
   const [useLoc, setUseLoc] = useState(true);
 
+  // For Mapbox-based search:
+  const [searchedLoc, setSearchedLoc] = useState<{ latitude: number; longitude: number; name: string } | null>(null);
+  const [mapboxToken, setMapboxToken] = useState<string>("");
+
   function handleImage(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -41,10 +46,14 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
     if (!restaurant.trim()) return setError("Restaurant name is required.");
     if (!name.trim()) return setError("Meal name is required.");
     if (rating === 0) return setError("Please select a rating.");
+    if (!useLoc && !searchedLoc) return setError("Please set restaurant location via GPS or search.");
+
     setError(null);
     let latLon: { latitude?: number; longitude?: number } = {};
     if (useLoc && location) {
       latLon = { latitude: location.latitude, longitude: location.longitude };
+    } else if (!useLoc && searchedLoc) {
+      latLon = { latitude: searchedLoc.latitude, longitude: searchedLoc.longitude };
     }
     onSave({
       restaurant: restaurant.trim(),
@@ -55,6 +64,9 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
       ...latLon,
     });
   }
+
+  // Disable Mapbox search if no token entered
+  const isSearchEnabled = !!mapboxToken;
 
   return (
     <form
@@ -133,17 +145,17 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
         <StarRating rating={rating} setRating={setRating} size={30} className="mb-1" />
       </div>
       <div className="mb-4">
-        <label className="block font-medium mb-1">Save Restaurant Location</label>
-        <div className="flex items-center gap-2">
+        <label className="block font-medium mb-1">Restaurant Location</label>
+        <div className="flex items-center gap-2 mb-1">
           <input
             type="checkbox"
             checked={useLoc}
             onChange={e => setUseLoc(e.target.checked)}
             className="mr-1"
-            id="save-location"
+            id="use-gps"
           />
-          <label htmlFor="save-location" className="text-sm text-gray-700">
-            Save my location for this restaurant (for future reminders)
+          <label htmlFor="use-gps" className="text-sm text-gray-700">
+            Use my current GPS location for this restaurant
           </label>
           <button
             type="button"
@@ -163,6 +175,33 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
                 : "Retrieving current location..."}
           </div>
         )}
+        {!useLoc && (
+          <div className="border rounded p-2 mt-2 bg-slate-50">
+            {!mapboxToken && (
+              <div className="mb-2">
+                <label className="text-xs block mb-1 font-medium text-gray-700">
+                  Mapbox Public Token:
+                </label>
+                <input
+                  className="w-full border rounded px-2 py-1 text-xs"
+                  value={mapboxToken}
+                  onChange={e => setMapboxToken(e.target.value)}
+                  placeholder="pk.eyJ1Ijo..."
+                />
+                <div className="text-[10px] mt-1 text-gray-600">
+                  Get your free public token from <a href="https://account.mapbox.com/" target="_blank" rel="noopener noreferrer" className="underline">Mapbox</a>.
+                </div>
+              </div>
+            )}
+            {!!mapboxToken && (
+              <RestaurantLocationSearch
+                mapboxToken={mapboxToken}
+                value={searchedLoc ? { latitude: searchedLoc.latitude, longitude: searchedLoc.longitude } : undefined}
+                onSelect={loc => setSearchedLoc(loc)}
+              />
+            )}
+          </div>
+        )}
       </div>
       {error && <div className="text-red-500 mb-2">{error}</div>}
       <button
@@ -174,3 +213,4 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
     </form>
   );
 }
+
