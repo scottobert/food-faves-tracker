@@ -208,7 +208,7 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
         type="submit"
         className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 rounded transition"
       >
-        Save Meal
+        {initial && (initial.restaurant || initial.name || initial.rating) ? "Update Meal" : "Save Meal"}
       </button>
     </form>
   );
