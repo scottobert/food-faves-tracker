@@ -1,19 +1,41 @@
 
 import { Meal } from "@/types/meal";
 import StarRating from "./StarRating";
+import SocialShareButton from "./SocialShareButton";
 
 type Props = {
   meal: Meal;
   onClick?: () => void;
 };
 
+const ORIGIN =
+  typeof window !== "undefined"
+    ? window.location.origin
+    : "https://my-meals-app.lovable.app";
+
+function buildShareUrl(meal: Meal) {
+  // Estimate a meal-share URL (you could improve it to use a canonical slug/ID if you want)
+  if (typeof window !== "undefined") {
+    return window.location.origin + "?meal=" + meal.id;
+  }
+  return "https://my-meals-app.lovable.app/?meal=" + meal.id;
+}
+
 export default function MealCard({ meal, onClick }: Props) {
+  // Build sharing text
+  const shareText = `🍽️ "${meal.name}" at ${meal.restaurant} — ${meal.rating}⭐` + (meal.description ? " | " + meal.description : "");
+
   return (
     <div
       className="rounded-xl shadow-lg bg-white transition hover:scale-105 cursor-pointer flex flex-col relative group"
       style={{ minWidth: 240, maxWidth: 310, width: "100%" }}
       onClick={onClick}
     >
+      <SocialShareButton
+        url={buildShareUrl(meal)}
+        text={shareText}
+        imageUrl={meal.imageUrl}
+      />
       {meal.imageUrl && (
         <img
           src={meal.imageUrl}
