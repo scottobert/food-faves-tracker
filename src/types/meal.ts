@@ -8,4 +8,5 @@ export interface Meal {
   imageUrl?: string;
   latitude?: number; // Optional restaurant latitude
   longitude?: number; // Optional restaurant longitude
+  tags?: string[]; // New: Meal tags/categories
 }

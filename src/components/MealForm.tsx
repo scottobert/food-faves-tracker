@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import { Meal } from "@/types/meal";
 import StarRating from "./StarRating";
@@ -21,6 +20,8 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [tags, setTags] = useState<string[]>(initial.tags || []);
+  const [tagInput, setTagInput] = useState("");
 
   const { location, error: locError, refresh } = useCurrentLocation();
   const [useLoc, setUseLoc] = useState(true);
@@ -38,6 +39,27 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
         setImageUrl(ev.target?.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  }
+
+  function addTag(tag: string) {
+    const clean = tag.trim();
+    if (!clean) return;
+    if (tags.includes(clean)) return;
+    setTags([...tags, clean]);
+    setTagInput("");
+  }
+  function removeTag(tag: string) {
+    setTags(tags.filter((t) => t !== tag));
+  }
+
+  function handleTagKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter" || e.key === ",") {
+      e.preventDefault();
+      addTag(tagInput);
+    }
+    if (e.key === "Backspace" && !tagInput && tags.length > 0) {
+      setTags(tags.slice(0, -1));
     }
   }
 
@@ -61,6 +83,7 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
       description: description.trim() || undefined,
       rating,
       imageUrl,
+      tags: tags.length ? tags : undefined,
       ...latLon,
     });
   }
@@ -145,6 +168,39 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
         <StarRating rating={rating} setRating={setRating} size={30} className="mb-1" />
       </div>
       <div className="mb-4">
+        <label className="block font-medium mb-1">Categories/Tags</label>
+        <div className="flex flex-wrap gap-2 mb-2">
+          {tags.map((tag, idx) => (
+            <span
+              key={idx}
+              className="flex items-center bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full text-xs font-medium"
+            >
+              #{tag}
+              <button
+                type="button"
+                className="ml-1 text-sky-500 hover:text-sky-800"
+                onClick={() => removeTag(tag)}
+                aria-label={`Remove tag ${tag}`}
+                tabIndex={-1}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+        <input
+          className="w-full border rounded px-3 py-2"
+          placeholder="Add tag, e.g. vegetarian, spicy"
+          value={tagInput}
+          onChange={e => setTagInput(e.target.value.replace(/[^a-zA-Z0-9 _-]/g, ""))}
+          onKeyDown={handleTagKeyDown}
+          onBlur={() => addTag(tagInput)}
+        />
+        <div className="text-xs text-gray-400 mt-1">
+          Press Enter or comma to add. E.g. "vegan", "pasta", "breakfast"
+        </div>
+      </div>
+      <div className="mb-4">
         <label className="block font-medium mb-1">Restaurant Location</label>
         <div className="flex items-center gap-2 mb-1">
           <input
@@ -213,4 +269,3 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
     </form>
   );
 }
-

@@ -54,6 +54,18 @@ export default function MealCard({ meal, onClick }: Props) {
         <div className="text-sm text-blue-800 font-semibold truncate mb-1">
           {meal.restaurant}
         </div>
+        {meal.tags && meal.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-1 mt-1">
+            {meal.tags.map((tag, idx) => (
+              <span
+                key={idx}
+                className="bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full text-xs font-medium"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
         {meal.description && (
           <div className="text-xs text-gray-500 mt-1 line-clamp-2">{meal.description}</div>
         )}
