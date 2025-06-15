@@ -49,6 +49,7 @@ export default function Index() {
   const [meals, setMeals] = useState<Meal[]>(DEMO);
   const [showForm, setShowForm] = useState(false);
   const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
+  const [search, setSearch] = useState(""); // NEW
 
   const { location, error: locError, refresh } = useCurrentLocation();
 
@@ -89,6 +90,17 @@ export default function Index() {
     setShowForm(false);
   }
 
+  // Filter meals based on search term
+  const filteredMeals = useMemo(() => {
+    if (!search.trim()) return meals;
+    const term = search.toLowerCase();
+    return meals.filter(
+      (m) =>
+        m.name.toLowerCase().includes(term) ||
+        m.restaurant.toLowerCase().includes(term)
+    );
+  }, [meals, search]);
+
   return (
     <div className="min-h-screen bg-slate-50 px-2 md:px-8 py-6">
       {/* Header */}
@@ -110,6 +122,17 @@ export default function Index() {
           <Plus size={28} />
         </button>
       </header>
+      {/* Search Bar */}
+      <div className="mb-6 max-w-md mx-auto">
+        <input
+          type="text"
+          placeholder="Search meals or restaurants..."
+          className="w-full border rounded-lg px-4 py-2 text-base shadow-sm"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          aria-label="Search meals"
+        />
+      </div>
       {nearbyMeal && (
         <div className="bg-green-100 border-l-4 border-green-600 p-4 mb-6 rounded-lg shadow flex items-center gap-4">
           <span className="text-green-700 font-semibold">
@@ -124,9 +147,9 @@ export default function Index() {
         </div>
       )}
       <section>
-        {meals.length === 0 ? (
+        {filteredMeals.length === 0 ? (
           <div className="text-gray-500 text-xl flex flex-col items-center mt-16">
-            <span>No meals saved yet.</span>
+            <span>No meals found.</span>
             <button
               className="mt-4 bg-blue-700 hover:bg-blue-900 text-white px-5 py-2 rounded-lg"
               onClick={() => {
@@ -139,7 +162,7 @@ export default function Index() {
           </div>
         ) : (
           <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {meals.map((meal) => (
+            {filteredMeals.map((meal) => (
               <MealCard
                 key={meal.id}
                 meal={meal}
