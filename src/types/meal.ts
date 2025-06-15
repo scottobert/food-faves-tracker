@@ -9,4 +9,5 @@ export interface Meal {
   latitude?: number; // Optional restaurant latitude
   longitude?: number; // Optional restaurant longitude
   tags?: string[]; // New: Meal tags/categories
+  price?: number; // Optional: price of the meal in user currency
 }

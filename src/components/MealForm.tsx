@@ -22,6 +22,7 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [tags, setTags] = useState<string[]>(initial.tags || []);
   const [tagInput, setTagInput] = useState("");
+  const [price, setPrice] = useState(initial.price !== undefined ? initial.price : "");
 
   const { location, error: locError, refresh } = useCurrentLocation();
   const [useLoc, setUseLoc] = useState(true);
@@ -77,6 +78,11 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
     } else if (!useLoc && searchedLoc) {
       latLon = { latitude: searchedLoc.latitude, longitude: searchedLoc.longitude };
     }
+    let parsedPrice: number | undefined = undefined;
+    if (price !== "") {
+      const p = Number(price);
+      if (!isNaN(p) && p >= 0) parsedPrice = p;
+    }
     onSave({
       restaurant: restaurant.trim(),
       name: name.trim(),
@@ -84,6 +90,7 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
       rating,
       imageUrl,
       tags: tags.length ? tags : undefined,
+      price: parsedPrice,
       ...latLon,
     });
   }
@@ -198,6 +205,23 @@ export default function MealForm({ onSave, onCancel, initial = {} }: Props) {
         />
         <div className="text-xs text-gray-400 mt-1">
           Press Enter or comma to add. E.g. "vegan", "pasta", "breakfast"
+        </div>
+      </div>
+      <div className="mb-4">
+        <label className="block font-medium mb-1">
+          Price <span className="text-gray-400">(Optional)</span>
+        </label>
+        <input
+          className="w-full border rounded px-3 py-2"
+          type="number"
+          min="0"
+          step="0.01"
+          placeholder="Enter price (e.g., 12.99)"
+          value={price}
+          onChange={e => setPrice(e.target.value)}
+        />
+        <div className="text-xs text-gray-400 mt-1">
+          Track what you paid last time. For your reference only.
         </div>
       </div>
       <div className="mb-4">

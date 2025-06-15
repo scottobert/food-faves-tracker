@@ -66,6 +66,11 @@ export default function MealCard({ meal, onClick }: Props) {
             ))}
           </div>
         )}
+        {typeof meal.price === "number" && (
+          <div className="text-xs text-green-800 font-medium mb-1">
+            Price: ${meal.price.toFixed(2)}
+          </div>
+        )}
         {meal.description && (
           <div className="text-xs text-gray-500 mt-1 line-clamp-2">{meal.description}</div>
         )}

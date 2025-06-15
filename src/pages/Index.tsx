@@ -53,6 +53,11 @@ export default function Index() {
 
   const { location, error: locError, refresh } = useCurrentLocation();
 
+  // Recent activity (added or updated meals)
+  const [recentActivity, setRecentActivity] = useState<
+    { type: "added" | "updated"; meal: Meal; date: Date }[]
+  >([]);
+
   // Find a meal with a restaurant near the current location
   const nearbyMeal = useMemo(() => {
     if (!location) return null;
@@ -65,19 +70,30 @@ export default function Index() {
   }, [meals, location]);
 
   function addMeal(fields: Omit<Meal, "id">) {
-    setMeals([{ ...fields, id: uuidv4() }, ...meals]);
+    const newMeal = { ...fields, id: uuidv4() };
+    setMeals([newMeal, ...meals]);
     setShowForm(false);
+    setRecentActivity([
+      { type: "added", meal: newMeal, date: new Date() },
+      ...recentActivity,
+    ]);
   }
 
   function updateMeal(newMeal: Omit<Meal, "id">) {
     if (!editingMeal) return;
-    setMeals((meals) =>
-      meals.map((meal) =>
-        meal.id === editingMeal.id ? { ...meal, ...newMeal } : meal
-      )
+    const updated = meals.map((meal) =>
+      meal.id === editingMeal.id ? { ...meal, ...newMeal } : meal
     );
+    setMeals(updated);
     setEditingMeal(null);
     setShowForm(false);
+    const targetMeal = updated.find((m) => m.id === editingMeal.id);
+    if (targetMeal) {
+      setRecentActivity([
+        { type: "updated", meal: targetMeal, date: new Date() },
+        ...recentActivity,
+      ]);
+    }
   }
 
   function handleCardClick(meal: Meal) {
@@ -133,6 +149,27 @@ export default function Index() {
           aria-label="Search meals"
         />
       </div>
+      {/* Recent Activity */}
+      {recentActivity.length > 0 && (
+        <div className="bg-white shadow rounded-lg p-4 mb-4 max-w-md mx-auto">
+          <div className="font-semibold text-gray-700 mb-2">Recent Activity</div>
+          <ul className="divide-y divide-gray-200">
+            {recentActivity.slice(0, 5).map((act, idx) => (
+              <li key={idx} className="py-1 flex items-center gap-2 text-sm">
+                <span className={act.type === "added" ? "text-green-600" : "text-blue-600"}>
+                  {act.type === "added" ? "Added" : "Updated"}
+                </span>
+                <span className="font-medium text-gray-800 truncate">
+                  {act.meal.name}
+                </span>
+                <span className="ml-auto text-xs text-gray-400">
+                  {act.date.toLocaleTimeString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       {nearbyMeal && (
         <div className="bg-green-100 border-l-4 border-green-600 p-4 mb-6 rounded-lg shadow flex items-center gap-4">
           <span className="text-green-700 font-semibold">
