@@ -1,235 +1,143 @@
-import { useState, useEffect, useMemo } from "react";
+
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Meal } from "@/types/meal";
 import MealCard from "@/components/MealCard";
 import MealForm from "@/components/MealForm";
-import { Plus } from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
-import { useCurrentLocation } from "@/hooks/useCurrentLocation";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { LogOut, Plus } from "lucide-react";
 
-const DEMO: Meal[] = [
-  {
-    id: "1",
-    name: "Margherita Pizza",
-    restaurant: "Luigi's",
-    rating: 5,
-    imageUrl: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=400&q=80",
-    description: "Classic tomato, mozzarella, basil.",
-    latitude: 37.773972,
-    longitude: -122.431297,
-  },
-  {
-    id: "2",
-    name: "Vegan Buddha Bowl",
-    restaurant: "GreenLeaf",
-    rating: 4,
-    imageUrl: undefined,
-    description: "",
-    latitude: undefined,
-    longitude: undefined,
-  },
-];
+const Index = () => {
+  const { user, signOut } = useAuth();
+  const [meals, setMeals] = useState<Meal[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isFormOpen, setIsFormOpen] = useState(false);
 
-function distanceInMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
-  // Haversine formula
-  const toRad = (x: number) => (x * Math.PI) / 180;
-  const R = 6371e3; // Earth radius in meters
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-    Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-const NEARBY_METERS = 100; // how close user must be to "match" a restaurant
-
-export default function Index() {
-  const [meals, setMeals] = useState<Meal[]>(DEMO);
-  const [showForm, setShowForm] = useState(false);
-  const [editingMeal, setEditingMeal] = useState<Meal | null>(null);
-  const [search, setSearch] = useState(""); // NEW
-
-  const { location, error: locError, refresh } = useCurrentLocation();
-
-  // Recent activity (added or updated meals)
-  const [recentActivity, setRecentActivity] = useState<
-    { type: "added" | "updated"; meal: Meal; date: Date }[]
-  >([]);
-
-  // Find a meal with a restaurant near the current location
-  const nearbyMeal = useMemo(() => {
-    if (!location) return null;
-    return meals.find(
-      m =>
-        typeof m.latitude === "number" &&
-        typeof m.longitude === "number" &&
-        distanceInMeters(location.latitude, location.longitude, m.latitude, m.longitude) < NEARBY_METERS
-    );
-  }, [meals, location]);
-
-  function addMeal(fields: Omit<Meal, "id">) {
-    const newMeal = { ...fields, id: uuidv4() };
-    setMeals([newMeal, ...meals]);
-    setShowForm(false);
-    setRecentActivity([
-      { type: "added", meal: newMeal, date: new Date() },
-      ...recentActivity,
-    ]);
-  }
-
-  function updateMeal(newMeal: Omit<Meal, "id">) {
-    if (!editingMeal) return;
-    const updated = meals.map((meal) =>
-      meal.id === editingMeal.id ? { ...meal, ...newMeal } : meal
-    );
-    setMeals(updated);
-    setEditingMeal(null);
-    setShowForm(false);
-    const targetMeal = updated.find((m) => m.id === editingMeal.id);
-    if (targetMeal) {
-      setRecentActivity([
-        { type: "updated", meal: targetMeal, date: new Date() },
-        ...recentActivity,
-      ]);
+  useEffect(() => {
+    if (user) {
+      fetchMeals();
     }
-  }
+  }, [user]);
 
-  function handleCardClick(meal: Meal) {
-    setEditingMeal(meal);
-    setShowForm(true);
-  }
+  const fetchMeals = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('meals')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  function handleCloseForm() {
-    setEditingMeal(null);
-    setShowForm(false);
-  }
+      if (error) {
+        console.error('Error fetching meals:', error);
+      } else {
+        // Convert the data to match our Meal interface
+        const mealsData: Meal[] = data?.map(meal => ({
+          id: meal.id,
+          restaurant: meal.restaurant,
+          name: meal.name,
+          description: meal.description,
+          rating: meal.rating,
+          imageUrl: meal.image_url,
+          latitude: meal.latitude,
+          longitude: meal.longitude,
+          tags: meal.tags,
+          price: meal.price,
+        })) || [];
+        setMeals(mealsData);
+      }
+    } catch (error) {
+      console.error('Error fetching meals:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Filter meals based on search term
-  const filteredMeals = useMemo(() => {
-    if (!search.trim()) return meals;
-    const term = search.toLowerCase();
-    return meals.filter(
-      (m) =>
-        m.name.toLowerCase().includes(term) ||
-        m.restaurant.toLowerCase().includes(term)
-    );
-  }, [meals, search]);
+  const handleMealAdded = () => {
+    setIsFormOpen(false);
+    fetchMeals(); // Refresh the meals list
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 px-2 md:px-8 py-6">
-      {/* Header */}
-      <header className="flex items-center mb-8">
-        <div className="flex-1">
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight select-none">
-            My Favorite Meals
-          </h1>
-          <p className="text-lg text-gray-500 mt-1">Track your favorites from any restaurant.</p>
-        </div>
-        <button
-          className="bg-blue-700 hover:bg-blue-900 text-white rounded-full shadow-lg p-3 ml-2 transition hover:scale-110"
-          title="Add Meal"
-          onClick={() => {
-            setShowForm(true);
-            setEditingMeal(null);
-          }}
-        >
-          <Plus size={28} />
-        </button>
-      </header>
-      {/* Search Bar */}
-      <div className="mb-6 max-w-md mx-auto">
-        <input
-          type="text"
-          placeholder="Search meals or restaurants..."
-          className="w-full border rounded-lg px-4 py-2 text-base shadow-sm"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          aria-label="Search meals"
-        />
-      </div>
-      {/* Recent Activity */}
-      {recentActivity.length > 0 && (
-        <div className="bg-white shadow rounded-lg p-4 mb-4 max-w-md mx-auto">
-          <div className="font-semibold text-gray-700 mb-2">Recent Activity</div>
-          <ul className="divide-y divide-gray-200">
-            {recentActivity.slice(0, 5).map((act, idx) => (
-              <li key={idx} className="py-1 flex items-center gap-2 text-sm">
-                <span className={act.type === "added" ? "text-green-600" : "text-blue-600"}>
-                  {act.type === "added" ? "Added" : "Updated"}
-                </span>
-                <span className="font-medium text-gray-800 truncate">
-                  {act.meal.name}
-                </span>
-                <span className="ml-auto text-xs text-gray-400">
-                  {act.date.toLocaleTimeString()}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {nearbyMeal && (
-        <div className="bg-green-100 border-l-4 border-green-600 p-4 mb-6 rounded-lg shadow flex items-center gap-4">
-          <span className="text-green-700 font-semibold">
-            You're at <b>{nearbyMeal.restaurant}</b>!
-          </span>
-          <span className="text-green-800">
-            Try your favorite: <b>{nearbyMeal.name}</b>
-          </span>
-          {nearbyMeal.imageUrl && (
-            <img src={nearbyMeal.imageUrl} alt={nearbyMeal.name} className="h-10 w-10 rounded shadow ml-2 object-cover" />
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50">
+        {/* Header */}
+        <header className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center h-16">
+              <div className="flex items-center space-x-2">
+                <span className="text-2xl">🍽️</span>
+                <h1 className="text-xl font-bold text-gray-900">My Favorite Meals</h1>
+              </div>
+              <div className="flex items-center space-x-4">
+                <span className="text-sm text-gray-600">Welcome, {user?.email}</span>
+                <Button variant="outline" size="sm" onClick={signOut}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex justify-between items-center mb-8">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Your Meals</h2>
+              <p className="text-gray-600 mt-2">Track and share your culinary adventures</p>
+            </div>
+            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-orange-500 hover:bg-orange-600">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Meal
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Add New Meal</DialogTitle>
+                </DialogHeader>
+                <MealForm onMealAdded={handleMealAdded} />
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="text-lg text-gray-600">Loading your meals...</div>
+            </div>
+          ) : meals.length === 0 ? (
+            <div className="text-center py-12">
+              <div className="text-lg text-gray-600 mb-4">No meals added yet!</div>
+              <p className="text-gray-500 mb-6">Start by adding your first favorite meal.</p>
+              <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-orange-500 hover:bg-orange-600">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Your First Meal
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Add New Meal</DialogTitle>
+                  </DialogHeader>
+                  <MealForm onMealAdded={handleMealAdded} />
+                </DialogContent>
+              </Dialog>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {meals.map((meal) => (
+                <MealCard key={meal.id} meal={meal} />
+              ))}
+            </div>
           )}
-        </div>
-      )}
-      <section>
-        {filteredMeals.length === 0 ? (
-          <div className="text-gray-500 text-xl flex flex-col items-center mt-16">
-            <span>No meals found.</span>
-            <button
-              className="mt-4 bg-blue-700 hover:bg-blue-900 text-white px-5 py-2 rounded-lg"
-              onClick={() => {
-                setShowForm(true);
-                setEditingMeal(null);
-              }}
-            >
-              Add your first meal
-            </button>
-          </div>
-        ) : (
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {filteredMeals.map((meal) => (
-              <MealCard
-                key={meal.id}
-                meal={meal}
-                onClick={() => handleCardClick(meal)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-      {/* Add/Edit Meal Modal */}
-      {showForm && (
-        <div className="fixed inset-0 z-40 bg-black bg-opacity-30 flex items-center justify-center">
-          <MealForm
-            onSave={editingMeal ? updateMeal : addMeal}
-            onCancel={handleCloseForm}
-            initial={editingMeal || undefined}
-          />
-        </div>
-      )}
-      {/* Floating add button for mobile */}
-      <button
-        className="sm:hidden fixed bottom-5 right-5 z-50 bg-blue-700 hover:bg-blue-900 text-white rounded-full p-4 shadow-xl transition hover:scale-110"
-        onClick={() => {
-          setShowForm(true);
-          setEditingMeal(null);
-        }}
-        aria-label="Add Meal"
-      >
-        <Plus size={28} />
-      </button>
-    </div>
+        </main>
+      </div>
+    </ProtectedRoute>
   );
-}
+};
+
+export default Index;
