@@ -1,4 +1,42 @@
-# Welcome to your Lovable project
+# Food Faves Tracker 🍽️
+
+A React-based web application for tracking and sharing your favorite meals from restaurants.
+
+## Features
+
+- 🔍 **Restaurant Search**: Search for restaurants using OpenStreetMap data
+- 📍 **Location Support**: Find nearby restaurants using your current location
+- ⭐ **Ratings & Reviews**: Rate meals and add detailed descriptions
+- 🏷️ **Tags & Categories**: Organize meals with custom tags and meal types
+- 📅 **Date Tracking**: Record when you enjoyed each meal
+- 📝 **Notes**: Add detailed notes about dietary restrictions, occasions, etc.
+- 📱 **Responsive Design**: Works great on mobile and desktop
+- 🔗 **Social Sharing**: Share your favorite meals on social media
+
+## GitHub Pages Deployment
+
+This project is automatically deployed to GitHub Pages using GitHub Actions.
+
+### Setup Instructions:
+
+1. **Enable GitHub Pages:**
+   - Go to your repository Settings
+   - Navigate to "Pages" in the left sidebar
+   - Under "Source", select "GitHub Actions"
+
+2. **Configure Environment Variables:**
+   - Go to repository Settings → Secrets and variables → Actions
+   - Add the following repository secrets:
+     - `VITE_SUPABASE_URL`: Your Supabase project URL
+     - `VITE_SUPABASE_ANON_KEY`: Your Supabase anonymous key
+
+3. **Deploy:**
+   - Push to the `main` branch or manually trigger the workflow
+   - The app will be available at: `https://yourusername.github.io/food-faves-tracker/`
+
+### Manual Deployment:
+
+You can also trigger deployment manually from the Actions tab in your GitHub repository.
 
 ## Project info
 

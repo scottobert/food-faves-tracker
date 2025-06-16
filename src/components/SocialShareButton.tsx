@@ -56,11 +56,10 @@ export default function SocialShareButton({ url, text, imageUrl, className }: Pr
       setCopied(false);
     }
   };
-
   return (
     <div className={"relative " + (className || "")}>
       <button
-        className="p-2 rounded-full bg-white shadow absolute right-2 top-2 z-10 hover:bg-blue-50 border transition focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="p-2 rounded-full bg-gray-50 hover:bg-blue-50 border border-gray-200 hover:border-blue-300 transition focus:outline-none focus:ring-2 focus:ring-blue-500"
         onClick={e => {
           e.stopPropagation();
           setOpen(v => !v);
@@ -69,10 +68,10 @@ export default function SocialShareButton({ url, text, imageUrl, className }: Pr
         aria-label="Share meal"
         type="button"
       >
-        <Share size={20} className="text-blue-600" />
+        <Share size={16} className="text-gray-600 hover:text-blue-600" />
       </button>
       {open && (
-        <div className="absolute right-2 top-10 z-20 bg-white border rounded shadow-lg w-44 p-2 animate-fade-in"
+        <div className="absolute right-0 bottom-12 z-20 bg-white border rounded shadow-lg w-44 p-2 animate-fade-in"
              onClick={e => e.stopPropagation()}>
           <button
             className="flex items-center gap-2 w-full hover:bg-slate-100 px-2 py-1 rounded transition"

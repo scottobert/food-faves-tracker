@@ -31,8 +31,7 @@ export type Database = {
           meal_id?: string
           user_id?: string
         }
-        Relationships: [
-          {
+        Relationships: [          {
             foreignKeyName: "activity_log_meal_id_fkey"
             columns: ["meal_id"]
             isOneToOne: false
@@ -41,15 +40,17 @@ export type Database = {
           },
         ]
       }
-      meals: {
-        Row: {
+      meals: {        Row: {
           created_at: string | null
           description: string | null
           id: string
           image_url: string | null
           latitude: number | null
           longitude: number | null
+          meal_date_time: string | null
+          meal_type: string | null
           name: string
+          notes: string | null
           price: number | null
           rating: number
           restaurant: string
@@ -64,7 +65,10 @@ export type Database = {
           image_url?: string | null
           latitude?: number | null
           longitude?: number | null
+          meal_date_time?: string | null
+          meal_type?: string | null
           name: string
+          notes?: string | null
           price?: number | null
           rating: number
           restaurant: string
@@ -79,7 +83,10 @@ export type Database = {
           image_url?: string | null
           latitude?: number | null
           longitude?: number | null
+          meal_date_time?: string | null
+          meal_type?: string | null
           name?: string
+          notes?: string | null
           price?: number | null
           rating?: number
           restaurant?: string

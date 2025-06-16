@@ -10,4 +10,7 @@ export interface Meal {
   longitude?: number; // Optional restaurant longitude
   tags?: string[]; // New: Meal tags/categories
   price?: number; // Optional: price of the meal in user currency
+  mealDateTime?: string; // Optional: when the meal was eaten (ISO string)
+  mealType?: 'breakfast' | 'lunch' | 'dinner' | 'snack' | 'dessert' | 'drink' | 'other'; // Type of meal
+  notes?: string; // Additional notes about the meal
 }
