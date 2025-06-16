@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import StarRating from "./StarRating";
 import RestaurantLocationSearch from "./RestaurantLocationSearch";
 
@@ -16,6 +17,7 @@ interface MealFormProps {
 }
 
 const MealForm = ({ onMealAdded }: MealFormProps) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     restaurant: "",
     name: "",
@@ -34,6 +36,16 @@ const MealForm = ({ onMealAdded }: MealFormProps) => {
     e.preventDefault();
     setLoading(true);
 
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to add a meal.",
+        variant: "destructive",
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('meals')
@@ -47,7 +59,8 @@ const MealForm = ({ onMealAdded }: MealFormProps) => {
             latitude: formData.latitude,
             longitude: formData.longitude,
             tags: formData.tags,
-            price: formData.price,
+            price: formData.price ? parseFloat(formData.price) : null,
+            user_id: user.id,
           }
         ]);
 
@@ -152,7 +165,7 @@ const MealForm = ({ onMealAdded }: MealFormProps) => {
             <Label>Rating</Label>
             <StarRating
               rating={formData.rating}
-              onRatingChange={(rating) => setFormData(prev => ({ ...prev, rating }))}
+              setRating={(rating) => setFormData(prev => ({ ...prev, rating }))}
             />
           </div>
 
