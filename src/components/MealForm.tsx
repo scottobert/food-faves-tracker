@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -134,9 +133,21 @@ const MealForm = ({ onMealAdded }: MealFormProps) => {
           <div className="space-y-2">
             <Label htmlFor="restaurant">Restaurant</Label>
             <RestaurantLocationSearch
-              onLocationSelect={handleLocationSelect}
-              value={formData.restaurant}
+              mapboxToken="your-mapbox-token"
+              onSelect={handleLocationSelect}
+              value={formData.latitude && formData.longitude ? {
+                latitude: formData.latitude,
+                longitude: formData.longitude
+              } : null}
             />
+            {formData.restaurant && (
+              <Input
+                value={formData.restaurant}
+                onChange={(e) => setFormData(prev => ({ ...prev, restaurant: e.target.value }))}
+                placeholder="Restaurant name"
+                className="mt-2"
+              />
+            )}
           </div>
 
           <div className="space-y-2">
