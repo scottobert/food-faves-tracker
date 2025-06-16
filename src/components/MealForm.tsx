@@ -11,6 +11,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Meal } from "@/types/meal";
 import StarRating from "./StarRating";
 import RestaurantLocationSearch from "./RestaurantLocationSearch";
+import { useCapacitorCamera } from "@/hooks/useCapacitorCamera";
+import { Camera, Trash2 } from "lucide-react";
 
 interface MealFormProps {
   onMealAdded: () => void;
@@ -19,7 +21,8 @@ interface MealFormProps {
 }
 
 const MealForm = ({ onMealAdded, editingMeal, onEditComplete }: MealFormProps) => {
-  const { user } = useAuth();  const [formData, setFormData] = useState({
+  const { user } = useAuth();
+  const { takePhoto, isLoading: cameraLoading, error: cameraError, isNativeApp } = useCapacitorCamera();const [formData, setFormData] = useState({
     restaurant: "",
     name: "",
     description: "",
@@ -183,11 +186,39 @@ const MealForm = ({ onMealAdded, editingMeal, onEditComplete }: MealFormProps) =
       }));
     }
   };
-
   const handleTagRemove = (tagToRemove: string) => {
     setFormData(prev => ({
       ...prev,
       tags: prev.tags.filter(tag => tag !== tagToRemove),
+    }));
+  };
+
+  const handleTakePhoto = async () => {
+    try {
+      const photoDataUrl = await takePhoto();
+      if (photoDataUrl) {
+        setFormData(prev => ({
+          ...prev,
+          imageUrl: photoDataUrl,
+        }));
+        toast({
+          title: "Photo captured!",
+          description: "Photo has been added to your meal.",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Camera Error",
+        description: "Failed to take photo. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setFormData(prev => ({
+      ...prev,
+      imageUrl: "",
     }));
   };
 
@@ -282,17 +313,73 @@ const MealForm = ({ onMealAdded, editingMeal, onEditComplete }: MealFormProps) =
               placeholder="Additional notes about this meal (dietary restrictions, special occasion, cooking method, etc.)"
               rows={3}
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="imageUrl">Image URL</Label>
-            <Input
-              id="imageUrl"
-              type="url"
-              value={formData.imageUrl}
-              onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
-              placeholder="https://example.com/image.jpg"
-            />
+          </div>          <div className="space-y-2">
+            <Label>Photo</Label>
+            {formData.imageUrl ? (
+              <div className="space-y-2">
+                <div className="relative">
+                  <img
+                    src={formData.imageUrl}
+                    alt="Meal preview"
+                    className="w-full h-48 object-cover rounded-md"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={handleRemovePhoto}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleTakePhoto}
+                  disabled={cameraLoading}
+                  className="w-full"
+                >
+                  <Camera className="mr-2 h-4 w-4" />
+                  {cameraLoading ? "Taking Photo..." : "Take New Photo"}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleTakePhoto}
+                  disabled={cameraLoading}
+                  className="w-full h-32 border-dashed"
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <Camera className="h-8 w-8 text-gray-400" />
+                    <span className="text-sm text-gray-500">
+                      {cameraLoading ? "Taking Photo..." : (isNativeApp ? "Take Photo" : "Select Photo")}
+                    </span>
+                  </div>
+                </Button>
+                {!isNativeApp && (
+                  <div className="text-xs text-gray-500 text-center">
+                    Or enter image URL manually:
+                  </div>
+                )}
+                {!isNativeApp && (
+                  <Input
+                    type="url"
+                    value={formData.imageUrl}
+                    onChange={(e) => setFormData(prev => ({ ...prev, imageUrl: e.target.value }))}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                )}
+              </div>
+            )}
+            {cameraError && (
+              <div className="text-sm text-red-500">
+                {cameraError}
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">

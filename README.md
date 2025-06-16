@@ -1,6 +1,6 @@
 # Food Faves Tracker 🍽️
 
-A React-based web application for tracking and sharing your favorite meals from restaurants.
+A React-based cross-platform application for tracking and sharing your favorite meals from restaurants. Available as a web app and native mobile app.
 
 ## Features
 
@@ -10,8 +10,76 @@ A React-based web application for tracking and sharing your favorite meals from 
 - 🏷️ **Tags & Categories**: Organize meals with custom tags and meal types
 - 📅 **Date Tracking**: Record when you enjoyed each meal
 - 📝 **Notes**: Add detailed notes about dietary restrictions, occasions, etc.
-- 📱 **Responsive Design**: Works great on mobile and desktop
+- 📱 **Cross-Platform**: Works on web, iOS, and Android
+- 📷 **Native Camera**: Take photos directly from the app (mobile)
+- 🌍 **Native Geolocation**: Precise location detection (mobile)
 - 🔗 **Social Sharing**: Share your favorite meals on social media
+
+## Mobile App Development
+
+This project supports native iOS and Android app development using Capacitor.
+
+### Prerequisites for Mobile Development:
+
+**For iOS development:**
+- macOS with Xcode installed
+- iOS Simulator or physical iOS device
+- CocoaPods: `sudo gem install cocoapods`
+
+**For Android development:**
+- Android Studio installed
+- Android SDK and emulator configured
+- Java Development Kit (JDK) 8 or higher
+
+### Mobile Development Commands:
+
+```sh
+# Install dependencies
+npm install
+
+# Build for mobile platforms
+npm run build:capacitor
+
+# Sync with native platforms
+npm run cap:sync
+
+# Open in iOS (requires macOS/Xcode)
+npm run cap:ios
+
+# Open in Android (requires Android Studio)
+npm run cap:android
+
+# Run with live reload on iOS
+npm run cap:serve
+
+# Run with live reload on Android  
+npm run cap:serve:android
+```
+
+### Adding New Platforms:
+
+If you need to add platforms to an existing project:
+
+```sh
+# Add iOS platform
+npx cap add ios
+
+# Add Android platform  
+npx cap add android
+```
+
+### Native Features:
+
+The app uses the following Capacitor plugins:
+- **@capacitor/camera**: Native camera access for food photos
+- **@capacitor/geolocation**: Precise location detection
+- **@capacitor/device**: Platform detection and device info
+
+### Platform-Specific Considerations:
+
+- **Web**: Falls back to browser APIs (file input for camera, browser geolocation)
+- **iOS**: Uses native camera and Core Location
+- **Android**: Uses native camera and Android location services
 
 ## GitHub Pages Deployment
 

@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { useCurrentLocation } from "@/hooks/useCurrentLocation";
+import { useCapacitorGeolocation } from "@/hooks/useCapacitorGeolocation";
 import { MapPin, Search, Navigation, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -28,9 +28,8 @@ const RestaurantLocationSearch: React.FC<RestaurantLocationSearchProps> = ({
   const [query, setQuery] = useState("");
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-  const [showResults, setShowResults] = useState(false);
-  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
-  const { location, error: locationError, refresh: refreshLocation } = useCurrentLocation();
+  const [showResults, setShowResults] = useState(false);  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
+  const { location, error: locationError, getCurrentLocation, isLoading: locationLoading, isNativeApp } = useCapacitorGeolocation();
   const { toast } = useToast();
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -465,16 +464,16 @@ const RestaurantLocationSearch: React.FC<RestaurantLocationSearchProps> = ({
           <Navigation className="h-4 w-4 mr-2" />
           Find Nearby
         </Button>
-        
-        {locationError && (
+          {locationError && (
           <Button
             type="button"
-            onClick={refreshLocation}
+            onClick={getCurrentLocation}
             variant="outline"
             size="sm"
             title="Retry location access"
+            disabled={locationLoading}
           >
-            <MapPin className="h-4 w-4" />
+            {locationLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
           </Button>
         )}
       </div>
