@@ -1,90 +1,90 @@
 
 import React, { useState } from "react";
-
-type SearchResult = {
-  id: string;
-  place_name: string;
-  center: [number, number]; // [longitude, latitude]
-};
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 
 interface RestaurantLocationSearchProps {
-  mapboxToken: string;
+  mapboxToken?: string;
   value?: { latitude: number; longitude: number } | null;
   onSelect: (loc: { latitude: number; longitude: number; name: string }) => void;
 }
 
 const RestaurantLocationSearch: React.FC<RestaurantLocationSearchProps> = ({
-  mapboxToken,
   value,
   onSelect,
 }) => {
-  const [input, setInput] = useState("");
-  const [results, setResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [restaurantName, setRestaurantName] = useState("");
+  const [latitude, setLatitude] = useState("");
+  const [longitude, setLongitude] = useState("");
 
-  async function handleSearch() {
-    if (!input.trim()) {
-      setResults([]);
-      return;
+  const handleSubmit = () => {
+    if (restaurantName.trim()) {
+      onSelect({
+        name: restaurantName.trim(),
+        latitude: latitude ? parseFloat(latitude) : 0,
+        longitude: longitude ? parseFloat(longitude) : 0,
+      });
+      // Reset form
+      setRestaurantName("");
+      setLatitude("");
+      setLongitude("");
     }
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
-          input
-        )}.json?access_token=${mapboxToken}&types=poi&limit=5`
-      );
-      const data = await res.json();
-      setResults(data.features || []);
-    } catch (e) {
-      setResults([]);
-    }
-    setLoading(false);
-  }
+  };
 
   return (
-    <div>
-      <div className="flex gap-2">
-        <input
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && handleSearch()}
-          className="w-full border rounded px-3 py-2"
-          placeholder="Search for restaurant (by name, address)..."
-          type="text"
+    <div className="space-y-4">
+      <div>
+        <Label htmlFor="restaurant-name">Restaurant Name</Label>
+        <Input
+          id="restaurant-name"
+          value={restaurantName}
+          onChange={(e) => setRestaurantName(e.target.value)}
+          placeholder="Enter restaurant name"
+          className="mt-1"
         />
-        <button
-          type="button"
-          className="bg-blue-700 hover:bg-blue-900 text-white rounded px-3 py-1"
-          onClick={handleSearch}
-        >
-          Search
-        </button>
       </div>
-      <ul className="mt-2">
-        {loading && <li className="text-sm text-gray-500">Searching...</li>}
-        {!loading &&
-          results.map(r => (
-            <li key={r.id}>
-              <button
-                type="button"
-                className="w-full text-left py-2 px-2 rounded hover:bg-slate-100"
-                onClick={() =>
-                  onSelect({
-                    latitude: r.center[1],
-                    longitude: r.center[0],
-                    name: r.place_name,
-                  })
-                }
-              >
-                <span className="font-medium">{r.place_name}</span>
-              </button>
-            </li>
-          ))}
-      </ul>
+      
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label htmlFor="latitude">Latitude (optional)</Label>
+          <Input
+            id="latitude"
+            value={latitude}
+            onChange={(e) => setLatitude(e.target.value)}
+            placeholder="e.g., 40.7128"
+            type="number"
+            step="any"
+            className="mt-1"
+          />
+        </div>
+        <div>
+          <Label htmlFor="longitude">Longitude (optional)</Label>
+          <Input
+            id="longitude"
+            value={longitude}
+            onChange={(e) => setLongitude(e.target.value)}
+            placeholder="e.g., -74.0060"
+            type="number"
+            step="any"
+            className="mt-1"
+          />
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        onClick={handleSubmit}
+        disabled={!restaurantName.trim()}
+        className="w-full"
+        variant="outline"
+      >
+        Add Restaurant
+      </Button>
+
       {value && (
-        <div className="text-xs mt-2 text-gray-700">
-          Location selected: <b>{value.latitude.toFixed(5)}, {value.longitude.toFixed(5)}</b>
+        <div className="text-xs text-gray-700 bg-gray-50 p-2 rounded">
+          <strong>Current location:</strong> {value.latitude.toFixed(5)}, {value.longitude.toFixed(5)}
         </div>
       )}
     </div>

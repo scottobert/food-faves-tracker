@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -133,7 +132,6 @@ const MealForm = ({ onMealAdded }: MealFormProps) => {
           <div className="space-y-2">
             <Label htmlFor="restaurant">Restaurant</Label>
             <RestaurantLocationSearch
-              mapboxToken="your-mapbox-token"
               onSelect={handleLocationSelect}
               value={formData.latitude && formData.longitude ? {
                 latitude: formData.latitude,
@@ -141,12 +139,18 @@ const MealForm = ({ onMealAdded }: MealFormProps) => {
               } : null}
             />
             {formData.restaurant && (
-              <Input
-                value={formData.restaurant}
-                onChange={(e) => setFormData(prev => ({ ...prev, restaurant: e.target.value }))}
-                placeholder="Restaurant name"
-                className="mt-2"
-              />
+              <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded">
+                <strong>Selected:</strong> {formData.restaurant}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="ml-2"
+                  onClick={() => setFormData(prev => ({ ...prev, restaurant: "", latitude: null, longitude: null }))}
+                >
+                  Clear
+                </Button>
+              </div>
             )}
           </div>
 
